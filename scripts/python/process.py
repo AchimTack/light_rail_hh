@@ -10,10 +10,29 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 # variables
-raw_data = r'../../data/raw/Passagierzahlen.csv'
+passengers_raw = r'../../data/raw/Passagierzahlen.csv'
+stations_raw = r'../../data/raw/station_coordinates.csv'
 
+
+### process passenger data
 # load raw data to df
-df = pd.read_csv(raw_data, sep=';', encoding='ISO-8859-1')
+df = pd.read_csv(stations_raw, sep='\t')
+df['lat'] = df['lat'].str.replace(',','.')
+df['lon'] = df['lon'].str.replace(',','.')
+
+df['lat'] = df['lat'].apply(pd.to_numeric)
+df['lon'] = df['lon'].apply(pd.to_numeric)
+
+print df.head(n=5)
+
+#upload df to local postgres db
+engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgis')
+df.to_sql('light_rail_stations', engine, if_exists='replace')
+
+
+### process passenger data
+# load raw data to df
+df = pd.read_csv(passengers_raw, sep=';', encoding='ISO-8859-1')
 df['dtmIstAbfahrtDatum'] = df['dtmIstAbfahrtDatum'].str.replace('.','-')
 df['Einsteiger'] = df['Einsteiger'].str.replace(',','.')
 df['Aussteiger'] = df['Aussteiger'].str.replace(',','.')
@@ -29,15 +48,13 @@ df['dep_time'] = pd.to_datetime(df['dep_time'],dayfirst=True)
 df['dep_time'] = df['dep_time'].values.astype('<M8[m]')
 df.set_index(pd.DatetimeIndex(df['dep_time']))
 
-## aggregate over time & station
-#df_agg = df.groupby(['dep_time','station']).sum()
-
 print df.head(n=5)
-
 
 #upload df to local postgres db
 engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgis')
-df.to_sql('light_rail_hh', engine, if_exists='replace')
+df.to_sql('light_rail_passengers', engine, if_exists='replace')
+
+del df
 
 print 'all done'
 
