@@ -12,49 +12,43 @@ from sqlalchemy import create_engine
 # variables
 passengers_raw = r'../../data/raw/Passagierzahlen.csv'
 stations_raw = r'../../data/raw/station_coordinates.csv'
-
+engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgis')
 
 ### process passenger data
 # load raw data to df
-df = pd.read_csv(stations_raw, sep='\t')
-df['lat'] = df['lat'].str.replace(',','.')
-df['lon'] = df['lon'].str.replace(',','.')
-
-df['lat'] = df['lat'].apply(pd.to_numeric)
-df['lon'] = df['lon'].apply(pd.to_numeric)
-
-print df.head(n=5)
+df1 = pd.read_csv(stations_raw, sep='\t')
+df1['lat'] = df1['lat'].str.replace(',','.')
+df1['lon'] = df1['lon'].str.replace(',','.')
+df1['lat'] = df1['lat'].apply(pd.to_numeric)
+df1['lon'] = df1['lon'].apply(pd.to_numeric)
+print df1.head(n=5)
 
 #upload df to local postgres db
-engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgis')
-df.to_sql('light_rail_stations', engine, if_exists='replace')
+df1.to_sql('light_rail_stations', engine, if_exists='replace')
 
 
 ### process passenger data
 # load raw data to df
-df = pd.read_csv(passengers_raw, sep=';', encoding='ISO-8859-1')
-df['dtmIstAbfahrtDatum'] = df['dtmIstAbfahrtDatum'].str.replace('.','-')
-df['Einsteiger'] = df['Einsteiger'].str.replace(',','.')
-df['Aussteiger'] = df['Aussteiger'].str.replace(',','.')
+df2 = pd.read_csv(passengers_raw, sep=';', encoding='ISO-8859-1')
+df2['dtmIstAbfahrtDatum'] = df2['dtmIstAbfahrtDatum'].str.replace('.','-')
+df2['Einsteiger'] = df2['Einsteiger'].str.replace(',','.')
+df2['Aussteiger'] = df2['Aussteiger'].str.replace(',','.')
+df2 = df2[['dtmIstAbfahrtDatum', 'Zugnr', 'Station', 'Einsteiger', 'Aussteiger']].copy()
 
-df = df[['dtmIstAbfahrtDatum', 'Zugnr', 'Station', 'Einsteiger', 'Aussteiger']].copy()
-df.columns = ['dep_time', 'train_id', 'station', 'boarders', 'deboarders']
-
-df['boarders'] = df['boarders'].apply(pd.to_numeric)
-df['deboarders'] = df['deboarders'].apply(pd.to_numeric)
+df2.columns = ['dep_time', 'train_id', 'station', 'boarders', 'deboarders']
+df2['boarders'] = df2['boarders'].apply(pd.to_numeric)
+df2['deboarders'] = df2['deboarders'].apply(pd.to_numeric)
 
 # convert string-timestamp to datetime
-df['dep_time'] = pd.to_datetime(df['dep_time'],dayfirst=True)
-df['dep_time'] = df['dep_time'].values.astype('<M8[m]')
-df.set_index(pd.DatetimeIndex(df['dep_time']))
+df2['dep_time'] = pd.to_datetime(df2['dep_time'],dayfirst=True)
+df2['dep_time'] = df2['dep_time'].values.astype('<M8[m]')
+df2.set_index(pd.DatetimeIndex(df2['dep_time']))
+print df2.head(n=5)
 
-print df.head(n=5)
 
 #upload df to local postgres db
-engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgis')
-df.to_sql('light_rail_passengers', engine, if_exists='replace')
+df2.to_sql('light_rail_passengers', engine, if_exists='replace')
 
-del df
 
 print 'all done'
 
