@@ -10,8 +10,8 @@ SELECT
 	ST_SetSRID(ST_MakePoint(b.lon, b.lat),4326) as geom
 
 FROM 
-	public.light_rail_passengers a,
-    public.light_rail_stations b
+	its_hackathon.light_rail_passengers a,
+    its_hackathon.light_rail_stations b
      
 WHERE
 	a.station = b.station

@@ -24,7 +24,7 @@ df1['lon'] = df1['lon'].apply(pd.to_numeric)
 print df1.head(n=5)
 
 #upload df to local postgres db
-df1.to_sql('light_rail_stations', engine, if_exists='replace')
+df1.to_sql('light_rail_stations', engine, schema='its_hackathon', if_exists='replace')
 
 
 ### process passenger data
@@ -32,7 +32,7 @@ df1.to_sql('light_rail_stations', engine, if_exists='replace')
 df2 = pd.read_csv(passengers_raw, sep=';', encoding='ISO-8859-1')
 df2['dtmIstAbfahrtDatum'] = df2['dtmIstAbfahrtDatum'].str.replace('.','-')
 df2['Einsteiger'] = df2['Einsteiger'].str.replace(',','.')
-df2['Aussteiger'] = df2['Aussteiger'].str.replace(',','.')
+df2['Aussteiger'] = df2['Aussteiger'].str.replace(',','.')s
 df2 = df2[['dtmIstAbfahrtDatum', 'Zugnr', 'Station', 'Einsteiger', 'Aussteiger']].copy()
 
 df2.columns = ['dep_time', 'train_id', 'station', 'boarders', 'deboarders']
@@ -45,9 +45,8 @@ df2['dep_time'] = df2['dep_time'].values.astype('<M8[m]')
 df2.set_index(pd.DatetimeIndex(df2['dep_time']))
 print df2.head(n=5)
 
-
 #upload df to local postgres db
-df2.to_sql('light_rail_passengers', engine, if_exists='replace')
+df2.to_sql('light_rail_passengers', engine, schema='its_hackathon', if_exists='replace')
 
 
 print 'all done'
